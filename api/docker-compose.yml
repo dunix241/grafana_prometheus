@@ -1,0 +1,12 @@
+services:
+  web:
+    image: prom-api:latest
+    container_name: prom_api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 9999:9999
+    restart: always
+    volumes:
+      - /root/data/docker/promgrablack/prometheus/blackbox_targets.yml:/prometheus/blackbox_targets.yml

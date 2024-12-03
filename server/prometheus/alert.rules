@@ -1,0 +1,113 @@
+groups:
+  - name: web-services
+    rules:
+      - alert: BlackboxSslCertificateWillExpireSoon
+        expr: 3 <= round((last_over_time(probe_ssl_earliest_cert_expiry[10m]) - time()) / 86400, 0.1) < 20
+        for: 0m
+        labels:
+          severity: warning
+          team: devops
+          receiver: email
+        annotations:
+          summary: SSL Certificate Expiry Warning
+          description: "\nInstance: {{ $labels.instance }} \nDescription: SSL certificate expires in less than {{ $value }} days\nJob: {{ $labels.job }}\n--"
+
+      - alert: BlackboxSslCertificateWillExpireSoon
+        expr: 0 <= round((last_over_time(probe_ssl_earliest_cert_expiry[10m]) - time()) / 86400, 0.1) < 3
+        for: 0m
+        labels:
+          severity: critical
+          team: devops
+          receiver: email
+        annotations:
+          summary: SSL Certificate Expiry Warning
+          description: "\nInstance: {{ $labels.instance }} \nDescription: SSL certificate expires in less than {{ $value }} days\nJob: {{ $labels.job }}\n--"
+
+      - alert: BlackboxSslCertificateExpiredViaMail
+        expr: round((last_over_time(probe_ssl_earliest_cert_expiry[10m]) - time()) / 86400, 0.1) < 0
+        for: 0m
+        labels:
+          severity: critical
+          team: devops
+          receiver: email
+        annotations:
+          summary: SSL Certificate Expiry Critical
+          description: "\nInstance: {{ $labels.instance }} \nDescription: SSL certificate expires in less than {{ $value }} days\nJob: {{ $labels.job }}\n--"
+
+      - alert: BlackboxSslCertificateExpiredViaTelegram
+        expr: round((last_over_time(probe_ssl_earliest_cert_expiry[10m]) - time()) / 86400, 0.1) < 0
+        for: 0m
+        labels:
+          severity: critical
+          team: devops
+          receiver: telegram
+        annotations:
+          summary: SSL Certificate Expiry Critical
+          description: "[FAILED] Instance: {{ $labels.instance }} - SSL Certificate expired\n"
+
+      - alert: BlackboxConfigurationReloadFailureViaMail
+        expr: blackbox_exporter_config_last_reload_successful != 1
+        for: 0m
+        labels:
+          severity: warning
+          team: devops
+          receiver: email
+        annotations:
+          summary: Blackbox configuration reload failure
+          description: "\nInstance: {{ $labels.instance }} \nDescription: Blackbox configuration reload failure\nJob: {{ $labels.job }}\n--"
+
+      - alert: BlackboxConfigurationReloadFailureViaTelegram
+        expr: blackbox_exporter_config_last_reload_successful != 1
+        for: 0m
+        labels:
+          severity: warning
+          team: devops
+          receiver: telegram
+        annotations:
+          summary: Blackbox configuration reload failure
+          description: "[FAILED] Instance: {{ $labels.instance }} - Blackbox exporter configuration invalid\n"
+
+      - alert: BlackboxProbeHttpFailureViaMail
+        expr: probe_http_status_code <= 199 OR probe_http_status_code >= 400
+        for: 15m
+        labels:
+          severity: critical
+          team: devops
+          receiver: email
+        annotations:
+          summary: Blackbox probe HTTP failure
+          description: "\nInstance: {{ $labels.instance }} \nDescription: HTTP status code is {{ $value }}\nJob: {{ $labels.job }}\n--"
+
+      - alert: BlackboxProbeHttpFailureViaTelegram
+        expr: probe_http_status_code <= 199 OR probe_http_status_code >= 400
+        for: 20m
+        labels:
+          severity: critical
+          team: devops
+          receiver: telegram
+        annotations:
+          summary: Blackbox probe HTTP failure
+          description: "[FAILED] Instance: {{ $labels.instance }} - Status code is {{ $value }}\n"
+
+      - alert: BlackboxProbeSlowHttpViaMail
+        expr: avg_over_time(probe_http_duration_seconds[1m]) > 5
+        for: 0m
+        labels:
+          severity: warning
+          team: devops
+          receiver: email
+        annotations:
+          summary: Blackbox probe slow HTTP
+          description: "\nInstance: {{ $labels.instance }} \nDescription: HTTP request took more than {{ $value }}s\nJob: {{ $labels.job }}\n--"
+
+      - alert: BlackboxProbeSlowHttpViaTelegram
+        expr: avg_over_time(probe_http_duration_seconds[1m]) > 15
+        for: 0m
+        labels:
+          severity: critical
+          team: devops
+          receiver: telegram
+        annotations:
+          summary: Blackbox probe slow HTTP
+          description: "[FAILED] Instance: {{ $labels.instance }} - HTTP Probe duration > {{ $value }} minutes\n"
+

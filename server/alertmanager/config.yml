@@ -1,0 +1,40 @@
+global:
+  resolve_timeout: 60m
+
+templates:
+  - ./templates/*.tmpl
+
+route:
+  receiver: "sns-receiver"
+  group_wait: 5m
+  group_interval: 30m
+  repeat_interval: 4h
+  group_by: ["alertname", "severity"]
+  routes:
+    - receiver: sns-receiver
+      match:
+        receiver: email
+      continue: true
+
+    - receiver: telegram-receiver
+      match:
+        receiver: telegram
+      continue: true
+
+receivers:
+  - name: "sns-receiver"
+    sns_configs:
+      - api_url: "https://sns.eu-west-1.amazonaws.com"
+        sigv4:
+          region: eu-west-1
+          access_key: ''
+          secret_key: ''
+        topic_arn: ''
+        subject: "[No-reply] Prometheus | {{ .CommonAnnotations.summary }}"
+        message: "{{ range .Alerts }}{{ .Annotations.description }}\n{{ end }}"
+  - name: telegram-receiver
+    telegram_configs:
+      - send_resolved: true
+        bot_token: ""
+        chat_id: -123456
+        message: "{{ range .Alerts }}{{ .Annotations.description }}{{ end }}"
